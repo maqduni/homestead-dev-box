@@ -1,0 +1,31 @@
+# TODO: Add Python and Django here once the VM is separated into it's own development repository
+
+ip: 192.168.10.10
+memory: 2048
+cpus: 1
+provider: virtualbox
+authorize: ~/.ssh/id_rsa.pub
+keys:
+    - ~/.ssh/id_rsa
+
+folders:
+    -   map: /Users/iskandar/Documents/Projects/_Personal/vazhaju
+        to: /home/vagrant/Code/vazhaju
+    -   map: /Users/iskandar/Documents/Projects/_Personal/vazhaju-resources
+        to: /home/vagrant/Code/vazhaju-resources
+#    -   map: /Users/iskandar/Documents/Projects/_Personal/vazhaju-auth
+#        to: /home/vagrant/Code/vazhaju-auth
+    -   map: /Users/iskandar/Documents/Projects/_Personal/chapongift-web
+        to: /home/vagrant/Code/random
+sites:
+    -   map: vazhaju.test
+        to: /home/vagrant/Code/vazhaju/public
+#    -   map: auth.vazhaju.test
+#        to: /home/vagrant/Code/vazhaju-auth/public
+    -   map: rnd.vazhaju.test
+        to: /home/vagrant/Code/random/public
+databases:
+    - loughat
+#    - auth
+name: devbox
+hostname: devbox
