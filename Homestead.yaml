@@ -1,6 +1,8 @@
 # TODO: Add Python and Django here once the VM is separated into it's own development repository
 
+name: devbox
 ip: 192.168.10.10
+hostname: devbox
 memory: 2048
 cpus: 1
 provider: virtualbox
@@ -9,6 +11,7 @@ keys:
     - ~/.ssh/id_rsa
 
 folders:
+    # Laravel projects and resources
     -   map: /Users/iskandar/Documents/Projects/_Personal/vazhaju
         to: /home/vagrant/Code/vazhaju
     -   map: /Users/iskandar/Documents/Projects/_Personal/vazhaju-resources
@@ -16,16 +19,23 @@ folders:
 #    -   map: /Users/iskandar/Documents/Projects/_Personal/vazhaju-auth
 #        to: /home/vagrant/Code/vazhaju-auth
     -   map: /Users/iskandar/Documents/Projects/_Personal/chapongift-web
-        to: /home/vagrant/Code/random
+        to: /home/vagrant/Code/chapon
+
+    # Django projects and resources
+    -   map: ~/homesteadvirtualenvs
+        to: /home/vagrant/.virtualenvs
 sites:
     -   map: vazhaju.test
         to: /home/vagrant/Code/vazhaju/public
 #    -   map: auth.vazhaju.test
 #        to: /home/vagrant/Code/vazhaju-auth/public
-    -   map: rnd.vazhaju.test
-        to: /home/vagrant/Code/random/public
+    -   map: chapon.test
+        to: /home/vagrant/Code/chapon/public
+
 databases:
     - loughat
+    - chapon
 #    - auth
-name: devbox
-hostname: devbox
+
+features:
+    - python: true

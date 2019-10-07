@@ -11,3 +11,6 @@ test:
 ssh:
 #	if [ -z "$(CMD)" ]; then echo "$(CMD_DEFAULT)"; else echo "$(CMD)"; fi
 	vagrant ssh $(VM_ID) -- -t "$(CMD)"
+
+provision:
+	vagrant reload --provision

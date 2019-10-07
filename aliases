@@ -206,3 +206,5 @@ function xphp() {
 
     if ! $XDEBUG_ENABLED; then xoff; fi
 }
+
+source /usr/local/bin/virtualenvwrapper.sh
