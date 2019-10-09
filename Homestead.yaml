@@ -9,24 +9,27 @@ keys:
     - ~/.ssh/id_rsa
 
 folders:
+    #
     # Laravel projects and resources
-    -   map: /Users/iskandar/Documents/Projects/_Personal/vazhaju
+    #
+    -   map: ~/Documents/Projects/_Personal/vazhaju
         to: /home/vagrant/Code/vazhaju
-    -   map: /Users/iskandar/Documents/Projects/_Personal/vazhaju-resources
+    -   map: ~/Documents/Projects/_Personal/vazhaju-resources
         to: /home/vagrant/Code/vazhaju-resources
-#    -   map: /Users/iskandar/Documents/Projects/_Personal/vazhaju-auth
+#    -   map: ~/Documents/Projects/_Personal/vazhaju-auth
 #        to: /home/vagrant/Code/vazhaju-auth
 
+    #
     # Django projects and resources
-    # TODO: map Python virtual environments
-#    -   map: ~/homesteadvirtualenvs
-#        to: /home/vagrant/.virtualenvs
-    -   map: /Users/iskandar/Documents/Projects/_Playground/djng
-        to: /home/vagrant/Code/djng
+    #
+    -   map: ~/.virtualenvs # map local Python virtual environments
+        to: /home/vagrant/.virtualenvs
+    -   map: ~/Documents/Projects/_Playground/django
+        to: /home/vagrant/Code/django
 sites:
     -   map: vazhaju.test
         to: /home/vagrant/Code/vazhaju/public
-    -   map: djng.test
+    -   map: django.test
         to: 8000
         type: proxy
 #    -   map: auth.vazhaju.test

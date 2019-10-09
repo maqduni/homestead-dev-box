@@ -207,6 +207,7 @@ function xphp() {
     if ! $XDEBUG_ENABLED; then xoff; fi
 }
 
+# virtualenv wrapper, python shell and pip
 source /usr/local/bin/virtualenvwrapper.sh
 alias python2=python
 alias pip2=pip
