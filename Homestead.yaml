@@ -1,5 +1,3 @@
-# TODO: Add Python and Django here once the VM is separated into it's own development repository
-
 name: devbox
 ip: 192.168.10.10
 hostname: devbox
@@ -18,23 +16,24 @@ folders:
         to: /home/vagrant/Code/vazhaju-resources
 #    -   map: /Users/iskandar/Documents/Projects/_Personal/vazhaju-auth
 #        to: /home/vagrant/Code/vazhaju-auth
-    -   map: /Users/iskandar/Documents/Projects/_Personal/chapongift-web
-        to: /home/vagrant/Code/chapon
 
     # Django projects and resources
-    -   map: ~/homesteadvirtualenvs
-        to: /home/vagrant/.virtualenvs
+    # TODO: map Python virtual environments
+#    -   map: ~/homesteadvirtualenvs
+#        to: /home/vagrant/.virtualenvs
+    -   map: /Users/iskandar/Documents/Projects/_Playground/djng
+        to: /home/vagrant/Code/djng
 sites:
     -   map: vazhaju.test
         to: /home/vagrant/Code/vazhaju/public
+    -   map: djng.test
+        to: 8000
+        type: proxy
 #    -   map: auth.vazhaju.test
 #        to: /home/vagrant/Code/vazhaju-auth/public
-    -   map: chapon.test
-        to: /home/vagrant/Code/chapon/public
 
 databases:
     - loughat
-    - chapon
 #    - auth
 
 features:

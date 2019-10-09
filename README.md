@@ -38,3 +38,15 @@ Complete Homestead documentation https://laravel.com/docs/5.8/homestead.
 
 NOTE:
 `Homestead.yaml` contains mappings to all sites. It's done so that one VM can be shared among several projects.
+
+## Python virtual environments
+1. Virtualenvwrapper is pre-installed. Excerpt from `/usr/local/bin/virtualenvwrapper.sh`:
+```bash
+#  5. Run: workon
+#  6. A list of environments, empty, is printed.
+#  7. Run: mkvirtualenv temp
+#  8. Run: workon
+#  9. This time, the "temp" environment is included.
+# 10. Run: workon temp
+# 11. The virtual environment is activated.
+```
