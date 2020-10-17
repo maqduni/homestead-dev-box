@@ -22,10 +22,11 @@ folders:
     #
     # Django projects and resources
     #
+    # https://virtualenvwrapper.readthedocs.io/en/latest/command_ref.html#managing-environments
     -   map: ~/.virtualenvs # map local Python virtual environments
         to: /home/vagrant/.virtualenvs
-    -   map: ~/Documents/Projects/_Playground/django
-        to: /home/vagrant/Code/django
+#    -   map: ~/Documents/Projects/_Playground/django
+#        to: /home/vagrant/Code/django
 sites:
     -   map: vazhaju.test
         to: /home/vagrant/Code/vazhaju/public
