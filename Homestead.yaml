@@ -10,7 +10,7 @@ keys:
 
 folders:
     #
-    # Laravel projects and resources
+    # Projects and resources
     #
     -   map: ~/Documents/Projects/_Personal/vazhaju
         to: /home/vagrant/Code/vazhaju
@@ -20,13 +20,12 @@ folders:
 #        to: /home/vagrant/Code/vazhaju-auth
 
     #
-    # Django projects and resources
+    # Tooling
     #
     # https://virtualenvwrapper.readthedocs.io/en/latest/command_ref.html#managing-environments
     -   map: ~/.virtualenvs # map local Python virtual environments
         to: /home/vagrant/.virtualenvs
-#    -   map: ~/Documents/Projects/_Playground/django
-#        to: /home/vagrant/Code/django
+
 sites:
     -   map: vazhaju.test
         to: /home/vagrant/Code/vazhaju/public

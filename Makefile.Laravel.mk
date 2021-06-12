@@ -10,6 +10,9 @@ include $(ENV_FILE)
 # Constants
 XDEBUG_PARAMS='"-dxdebug.remote_enable=1 -dxdebug.remote_autostart=on -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=$(APP_DEBUG_REMOTE_HOST) -dxdebug.remote_connect_back=0 -dxdebug.idekey=$(APP_DEBUG_IDE_KEY)"'
 
+test:
+	echo 'test'
+
 #
 # Production deployment
 #
@@ -99,7 +102,7 @@ dev_phpunit_debug:
 cache_config:
 	(cd server; php artisan route:cache; php artisan config:cache; php artisan view:cache)
 clear_config_cache:
-	(cd server; php artisan cache:clear; php artisan view:clear; php artisan config:clear)
+	(cd server; php artisan route:clear; php artisan config:clear; php artisan view:clear)
 
 dev_cache: dev_autoload dev_clear_config_cache
 dev_clear_config_cache:
