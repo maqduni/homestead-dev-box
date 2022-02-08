@@ -14,6 +14,23 @@ test:
 	echo 'test'
 
 #
+# TODO: Production deployment
+#
+deploy_server:
+	echo 'deploy_server'
+
+
+#
+# Development box
+#
+# TODO: dev_configure to run all configuration commands to set up dev instance?
+dev_vm_up:
+	(cd $(HOMESTEAD_BOX_FOLDER) && vagrant up)
+dev_vm_halt:
+	(cd $(HOMESTEAD_BOX_FOLDER) && vagrant halt)
+
+
+#
 # SSH
 #
 prod_ssh:
@@ -25,3 +42,4 @@ dev_ssh:
 	make dev_sc CMD='cd $(DEV_FOLDER); bash -l'
 dev_sc: # TODO: merge this command with dev_ssh once I figure out how to assign variable names properly in bash
 	(cd $(HOMESTEAD_BOX_FOLDER) && make ssh CMD="$(CMD)")
+

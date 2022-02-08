@@ -8,7 +8,7 @@ ENV_FILE = ./server/.env
 include $(ENV_FILE)
 
 # Constants
-XDEBUG_PARAMS='"-dxdebug.remote_enable=1 -dxdebug.remote_autostart=on -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=$(APP_DEBUG_REMOTE_HOST) -dxdebug.remote_connect_back=0 -dxdebug.idekey=$(APP_DEBUG_IDE_KEY)"'
+XDEBUG_PARAMS='"-dxdebug.mode=debug -dxdebug.start_with_request=yes -dxdebug.client_port=9000 -dxdebug.client_host=$(APP_DEBUG_REMOTE_HOST) -dxdebug.discover_client_host=false -dxdebug.idekey=$(APP_DEBUG_IDE_KEY)"'
 
 test:
 	echo 'test'
@@ -48,6 +48,8 @@ dev_artisan:
 dev_artisan_debug:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server; php $(XDEBUG_PARAMS) artisan $(CMD)'
 
+dev_ngrok:
+	make dev_sc CMD='ngrok authtoken $(NGROK_AUTH_TOKEN); ngrok http -host-header=rewrite $(APP_URL):80'
 
 #
 # Database
@@ -55,6 +57,7 @@ dev_artisan_debug:
 # TODO: create a cron job to create daily database backups
 # TODO: transfer the backup to S3 https://laravel.com/docs/5.8/homestead#configuring-minio
 prod_list_backups:
+	# N.B. delete files using a name mask "ls -1 | grep '{MASK}' | xargs rm -f"
 	make prod_ssh_cmd CMD='cd $(BACKUP_FOLDER); ls -1'
 prod_db_backup:
 	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER); make db_backup'
@@ -115,7 +118,7 @@ dev_autoload:
 # Logs
 #
 prod_logs:
-	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 100 -f `ls -t | head -1`'
+	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 200 -f `ls -t | head -1`'
 dev_logs:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server/storage/logs; tail -n 100 -f laravel.log'
 
