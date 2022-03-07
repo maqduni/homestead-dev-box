@@ -40,7 +40,7 @@ NOTE:
 `Homestead.yaml` contains mappings to all sites. It's done so that one VM can be shared among several projects.
 
 ## Python virtual environments
-1. Virtualenvwrapper is pre-installed. Excerpt from `/usr/local/bin/virtualenvwrapper.sh`:
+Virtualenvwrapper is pre-installed. Excerpt from `/usr/local/bin/virtualenvwrapper.sh`:
 ```bash
 #  5. Run: workon
 #  6. A list of environments, empty, is printed.
@@ -50,3 +50,6 @@ NOTE:
 # 10. Run: workon temp
 # 11. The virtual environment is activated.
 ```
+
+## Known issues
+Getting Vagrant 2.2.6 working with VirtualBox 6.1 GA - [link](https://blogs.oracle.com/scoter/post/getting-vagrant-226-working-with-virtualbox-61-ga)
