@@ -35,7 +35,7 @@ deploy_server_finish:
 #
 # Development box
 #
-# TODO: dev_configure to run all configuration commands to set up dev instance?
+# todo: dev_configure to run all configuration commands to set up dev instance?
 dev_vm_up:
 	(cd $(HOMESTEAD_BOX_FOLDER) && vagrant up)
 dev_vm_halt:
@@ -48,24 +48,26 @@ dev_artisan:
 dev_artisan_debug:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server; php $(XDEBUG_PARAMS) artisan $(CMD)'
 
+dev_migrate:
+	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan migrate'
+dev_rollback:
+	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan migrate:rollback --step=1'
+
 dev_ngrok:
 	make dev_sc CMD='ngrok authtoken $(NGROK_AUTH_TOKEN); ngrok http -host-header=rewrite $(APP_URL):80'
 
 #
 # Database
 #
-# TODO: create a cron job to create daily database backups
-# TODO: transfer the backup to S3 https://laravel.com/docs/5.8/homestead#configuring-minio
+# todo: this is an exact copy of what's in the Laravel makefile
+# todo: create a cron job to create daily database backups
+# todo: transfer the backup to S3 https://laravel.com/docs/5.8/homestead#configuring-minio
 prod_list_backups:
 	# N.B. delete files using a name mask "ls -1 | grep '{MASK}' | xargs rm -f"
 	make prod_ssh_cmd CMD='cd $(BACKUP_FOLDER); ls -1'
 prod_db_backup:
 	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER); make db_backup'
 
-dev_migrate:
-	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan migrate'
-dev_rollback:
-	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan migrate:rollback --step=1'
 dev_db_restore_from_prod:
 	make dev_sc CMD='cd $(DEV_FOLDER); make db_restore_from_prod BACKUP_NAME=$(BACKUP_NAME)'
 
@@ -85,7 +87,7 @@ db_restore_from_prod:
 	# make db_restore_from_prod BACKUP_NAME=
 	make db_download_from_prod BACKUP_NAME=$(BACKUP_NAME)
 	make db_restore BACKUP_NAME=$(BACKUP_NAME)
-# TODO: Switch to the current DB context
+# todo: Switch to the current DB context
 db_connect:
 	mysql -u root -p
 
@@ -133,7 +135,7 @@ prod_ssh_cmd:
 
 dev_ssh:
 	make dev_sc CMD='cd $(DEV_FOLDER); bash -l'
-dev_sc: # TODO: merge this command with dev_ssh once I figure out how to assign variable names properly in bash
+dev_sc: # todo: merge this command with dev_ssh once I figure out how to assign variable names properly in bash
 	(cd $(HOMESTEAD_BOX_FOLDER) && make ssh CMD="$(CMD)")
 
 
