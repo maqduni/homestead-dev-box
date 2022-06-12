@@ -21,9 +21,7 @@ Complete Homestead documentation https://laravel.com/docs/5.8/homestead.
 1. Composer (https://gist.github.com/tomysmile/3b37ab4a1ddd604093fe724d0a882166)
 ```
 	> brew update
-	> brew tap homebrew/dupes
-	> brew tap homebrew/php
-	> brew install php73
+	> brew install php
 	> brew install composer
 ```
 

@@ -3,7 +3,8 @@ ip: 192.168.10.10
 hostname: devbox
 memory: 2048
 cpus: 1
-provider: virtualbox
+provider: parallels
+box: laravel/homestead-arm
 authorize: ~/.ssh/id_rsa.pub
 keys:
     - ~/.ssh/id_rsa

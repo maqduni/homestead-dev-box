@@ -63,7 +63,7 @@ dev_ngrok:
 # todo: create a cron job to create daily database backups
 # todo: transfer the backup to S3 https://laravel.com/docs/5.8/homestead#configuring-minio
 prod_list_backups:
-	# N.B. delete files using a name mask "ls -1 | grep '{MASK}' | xargs rm -f"
+	# NOTE: delete files using a name mask "ls -1 | grep '{MASK}' | xargs rm -f"
 	make prod_ssh_cmd CMD='cd $(BACKUP_FOLDER); ls -1'
 prod_db_backup:
 	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER); make db_backup'

@@ -34,7 +34,7 @@ dev_vm_halt:
 #
 # todo: this is an exact copy of what's in the Laravel makefile
 prod_list_backups:
-	# N.B. delete files using a name mask "ls -1 | grep '{MASK}' | xargs rm -f"
+	# NOTE: delete files using a name mask "ls -1 | grep '{MASK}' | xargs rm -f"
 	make prod_ssh_cmd CMD='cd $(BACKUP_FOLDER); ls -1'
 prod_db_backup:
 	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER); make db_backup'

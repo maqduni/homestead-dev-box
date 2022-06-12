@@ -1,7 +1,7 @@
 VM_ID=devbox
 DEV_FOLDER=/home/vagrant/Code
 
-# TODO: Figure out how to use either the passed value or this default one
+# todo: Figure out how to use either the passed value or this default one
 #CMD_DEFAULT=cd $(DEV_FOLDER); bash -l
 
 # Commands
