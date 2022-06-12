@@ -13,9 +13,11 @@ folders:
     #
     # Projects and resources
     #
-    -   map: ~/Documents/Projects/_Personal/vazhaju
+    -   map: ~/Documents/Projects/homestead-dev-box
+        to: /home/vagrant/Code/homestead-dev-box
+    -   map: ~/Documents/Projects/vazhaju
         to: /home/vagrant/Code/vazhaju
-    -   map: ~/Documents/Projects/_Personal/vazhaju-resources
+    -   map: ~/Documents/Projects/vazhaju-resources
         to: /home/vagrant/Code/vazhaju-resources
 #    -   map: ~/Documents/Projects/_Personal/vazhaju-auth
 #        to: /home/vagrant/Code/vazhaju-auth
@@ -33,6 +35,7 @@ sites:
     -   map: django.test
         to: 8000
         type: proxy
+        php: "7.4"
 #    -   map: auth.vazhaju.test
 #        to: /home/vagrant/Code/vazhaju-auth/public
 
@@ -42,3 +45,6 @@ databases:
 
 features:
     - python: true
+services:
+    - enabled:
+          - "mysql"
