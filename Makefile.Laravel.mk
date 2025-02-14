@@ -8,7 +8,7 @@ ENV_FILE = ./server/.env
 include $(ENV_FILE)
 
 # Constants
-XDEBUG_PARAMS='"-dxdebug.mode=debug -dxdebug.start_with_request=yes -dxdebug.client_port=9000 -dxdebug.client_host=$(APP_DEBUG_REMOTE_HOST) -dxdebug.discover_client_host=false -dxdebug.idekey=$(APP_DEBUG_IDE_KEY)"'
+XDEBUG_PARAMS='"-dxdebug.mode=debug -dxdebug.start_with_request=yes -dxdebug.client_port=9003 -dxdebug.client_host=$(APP_DEBUG_REMOTE_HOST) -dxdebug.discover_client_host=false -dxdebug.idekey=$(APP_DEBUG_IDE_KEY)"'
 
 test:
 	echo 'test'
@@ -24,7 +24,7 @@ deploy_server_start:
 	(cd server; composer dump-autoload --optimize)
 	(cd server; php artisan migrate)
 	make cache_config
-	# manually run make restart_queue_worker
+	# manually run make restart_workers
 deploy_client_to_prod:
 	npm run prod
 	scp -r public $(PROD_USER)@$(PROD_HOST):$(PROD_FOLDER)
@@ -52,6 +52,8 @@ dev_migrate:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan migrate'
 dev_rollback:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan migrate:rollback --step=1'
+dev_seed:
+	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan db:seed --class=DatabaseSeeder'
 
 dev_ngrok:
 	make dev_sc CMD='ngrok authtoken $(NGROK_AUTH_TOKEN); ngrok http -host-header=rewrite $(APP_URL):80'
@@ -64,10 +66,12 @@ dev_ngrok:
 # todo: transfer the backup to S3 https://laravel.com/docs/5.8/homestead#configuring-minio
 prod_list_backups:
 	# NOTE: delete files using a name mask "ls -1 | grep '{MASK}' | xargs rm -f"
-	make prod_ssh_cmd CMD='cd $(BACKUP_FOLDER); ls -1'
+	make prod_ssh_cmd CMD='cd $(BACKUP_FOLDER); ls -lh'
 prod_db_backup:
 	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER); make db_backup'
 
+dev_db_restore:
+	make dev_sc CMD='cd $(DEV_FOLDER); make db_restore BACKUP_NAME=$(BACKUP_NAME)'
 dev_db_restore_from_prod:
 	make dev_sc CMD='cd $(DEV_FOLDER); make db_restore_from_prod BACKUP_NAME=$(BACKUP_NAME)'
 
@@ -119,8 +123,11 @@ dev_autoload:
 #
 # Logs
 #
+list_prod_logs:
+	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; ls -l'
 prod_logs:
-	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 200 -f `ls -t | head -1`'
+	#ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 200 -f `ls -t | head -1`'
+	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 200 -f laravel-2025-01-15.log'
 dev_logs:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server/storage/logs; tail -n 100 -f laravel.log'
 
@@ -140,27 +147,48 @@ dev_sc: # todo: merge this command with dev_ssh once I figure out how to assign 
 
 
 #
-# Queue
+# Queue, Schedule, Horizon
 #
 create_queue_worker:
 	# make create_queue_worker APP_FOLDER="$(PROD_FOLDER)" APP_USER="$(PROD_USER)"
 	$(APP_FOLDER)/shell/create_queue_worker.sh "$(APP_FOLDER)" "$(APP_USER)"
+create_schedule_worker:
+	$(APP_FOLDER)/shell/create_schedule_worker.sh "$(APP_FOLDER)" "$(APP_USER)"
 create_horizon_worker:
 	$(APP_FOLDER)/shell/create_horizon_worker.sh "$(APP_FOLDER)" "$(APP_USER)"
 
-restart_queue_worker:
+restart_supervisor_workers:
 	sudo supervisorctl restart laravel_queue-worker:*
+	sudo supervisorctl restart laravel_schedule-worker:*
+stop_supervisor_workers:
+	sudo supervisorctl stop laravel_queue-worker:*
+	sudo supervisorctl stop laravel_schedule-worker:*
+
+dev_create_queue_worker:
+	make dev_sc CMD='cd $(DEV_FOLDER); make create_queue_worker APP_FOLDER="$(DEV_FOLDER)" APP_USER="vagrant"'
+dev_create_schedule_worker:
+	make dev_sc CMD='cd $(DEV_FOLDER); make create_schedule_worker APP_FOLDER="$(DEV_FOLDER)" APP_USER="vagrant"'
+dev_create_horizon_worker:
+	make dev_sc CMD='cd $(DEV_FOLDER); make create_horizon_worker APP_FOLDER="$(DEV_FOLDER)" APP_USER="vagrant"'
+
 retry_failed_jobs:
 	(cd server; php artisan queue:retry all)
 see_failed_jobs:
 	(cd server; php artisan queue:failed)
-
-dev_create_queue_worker:
-	make dev_sc CMD='cd $(DEV_FOLDER); make create_queue_worker APP_FOLDER="$(DEV_FOLDER)" APP_USER="vagrant"'
-dev_create_horizon_worker:
-	make dev_sc CMD='cd $(DEV_FOLDER); make create_horizon_worker APP_FOLDER="$(DEV_FOLDER)" APP_USER="vagrant"'
+process_all_jobs:
+	(cd server; php artisan queue:work --stop-when-empty)
 
 dev_run_queue:
 	make dev_artisan_debug CMD='queue:work database --queue=publish,default --sleep=3 --tries=3 --timeout=60'
+dev_run_schedule:
+	make dev_artisan_debug CMD='schedule:run'
 dev_run_horizon:
 	make dev_artisan CMD='horizon'
+
+#
+# Diagnostics
+#
+check_disk_space:
+	df -h
+check_folder_size:
+	du -sh
