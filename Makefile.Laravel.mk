@@ -24,7 +24,7 @@ deploy_server_start:
 	(cd server; composer dump-autoload --optimize)
 	(cd server; php artisan migrate)
 	make cache_config
-	# manually run make restart_workers
+	# manually run make restart_supervisor_workers
 deploy_client_to_prod:
 	npm run prod
 	scp -r public $(PROD_USER)@$(PROD_HOST):$(PROD_FOLDER)
@@ -55,8 +55,9 @@ dev_rollback:
 dev_seed:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan db:seed --class=DatabaseSeeder'
 
-dev_ngrok:
-	make dev_sc CMD='ngrok authtoken $(NGROK_AUTH_TOKEN); ngrok http -host-header=rewrite $(APP_URL):80'
+ngrok:
+	ngrok config add-authtoken $(NGROK_AUTH_TOKEN)
+	ngrok http --host-header=rewrite $(APP_URL):80
 
 #
 # Database
@@ -126,8 +127,8 @@ dev_autoload:
 list_prod_logs:
 	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; ls -l'
 prod_logs:
-	#ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 200 -f `ls -t | head -1`'
-	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 200 -f laravel-2025-01-15.log'
+	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 200 -f `ls -t | head -1`'
+	#ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 200 -f laravel-2025-01-15.log'
 dev_logs:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server/storage/logs; tail -n 100 -f laravel.log'
 
@@ -192,3 +193,11 @@ check_disk_space:
 	df -h
 check_folder_size:
 	du -sh
+
+#
+# Certificates
+#
+renew_certificates_dry_run:
+	sudo certbot renew --dry-run
+renew_certificates:
+	sudo certbot renew
