@@ -202,3 +202,9 @@ renew_certificates_dry_run:
 	sudo certbot renew --dry-run
 renew_certificates:
 	sudo certbot renew
+
+#
+# Vagrant sync
+#
+dev_vagrant_rsync:
+	(cd $(HOMESTEAD_BOX_FOLDER) && vagrant rsync-auto)

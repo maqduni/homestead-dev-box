@@ -15,10 +15,13 @@ folders:
     #
     -   map: ~/Documents/Projects/homestead-dev-box
         to: /home/vagrant/Code/homestead-dev-box
+        type: "rsync"
     -   map: ~/Documents/Projects/vazhaju
         to: /home/vagrant/Code/vazhaju
+        type: "rsync"
     -   map: ~/Documents/Projects/vazhaju-resources
         to: /home/vagrant/Code/vazhaju-resources
+        type: "rsync"
 #    -   map: ~/Documents/Projects/_Personal/vazhaju-auth
 #        to: /home/vagrant/Code/vazhaju-auth
 
