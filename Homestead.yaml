@@ -26,15 +26,12 @@ folders:
     # Tooling
     #
     # https://virtualenvwrapper.readthedocs.io/en/latest/command_ref.html#managing-environments
-    -   map: ~/.virtualenvs # map local Python virtual environments
-        to: /home/vagrant/.virtualenvs
+#    -   map: ~/.virtualenvs # map local Python virtual environments
+#        to: /home/vagrant/.virtualenvs
 
 sites:
     -   map: vazhaju.test
         to: /home/vagrant/Code/vazhaju/public
-    -   map: django.test
-        to: 8000
-        type: proxy
         php: "7.4"
 #    -   map: auth.vazhaju.test
 #        to: /home/vagrant/Code/vazhaju-auth/public
@@ -44,7 +41,9 @@ databases:
 #    - auth
 
 features:
-    - python: true
+    # NOTE: there's probably a bug in Homestead https://laracasts.com/discuss/channels/code-review/homestead-not-creating-databases
+    - mysql: true
+#    - python: true
 services:
     - enabled:
           - "mysql"

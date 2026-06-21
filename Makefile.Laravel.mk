@@ -24,9 +24,10 @@ deploy_server_start:
 	(cd server; composer dump-autoload --optimize)
 	(cd server; php artisan migrate)
 	make cache_config
-	# manually run make restart_supervisor_workers
+	# ATTENTION: manually run "make restart_supervisor_workers"
+	make cache_deploy # set in the local Makefile
 deploy_client_to_prod:
-	npm run prod
+	npm run vite:build
 	scp -r public $(PROD_USER)@$(PROD_HOST):$(PROD_FOLDER)
 deploy_server_finish:
 	(cd server; php artisan up)
@@ -42,7 +43,7 @@ dev_vm_halt:
 	(cd $(HOMESTEAD_BOX_FOLDER) && vagrant halt)
 
 dev_watch:
-	npm run watch
+	npm run vite:watch
 dev_artisan:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan $(CMD)'
 dev_artisan_debug:
