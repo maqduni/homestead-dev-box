@@ -125,12 +125,21 @@ dev_autoload:
 #
 # Logs
 #
-list_prod_logs:
+prod_list_logs:
 	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; ls -l'
-prod_logs:
+prod_tail_logs:
 	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 200 -f `ls -t | head -1`'
 	#ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 200 -f laravel-2025-01-15.log'
-dev_logs:
+prod_delete_logs:
+	make prod_ssh_cmd CMD='cd $(PROD_FOLDER)/server/storage/logs; ls -lh'
+	@printf 'Delete the production log files listed above? Type "delete logs" to confirm: '; \
+	read confirmation; \
+	if [ "$$confirmation" = "delete logs" ]; then \
+		ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; find . -maxdepth 1 -type f -name "*.log" -print -delete'; \
+	else \
+		echo 'Aborted.'; \
+	fi
+dev_tail_logs:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server/storage/logs; tail -n 100 -f laravel.log'
 
 
