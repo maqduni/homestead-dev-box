@@ -8,7 +8,7 @@ ENV_FILE = ./server/.env
 include $(ENV_FILE)
 
 # Constants
-XDEBUG_PARAMS='"-dxdebug.mode=debug -dxdebug.start_with_request=yes -dxdebug.client_port=9000 -dxdebug.client_host=$(APP_DEBUG_REMOTE_HOST) -dxdebug.discover_client_host=false -dxdebug.idekey=$(APP_DEBUG_IDE_KEY)"'
+XDEBUG_PARAMS='"-dxdebug.mode=debug -dxdebug.start_with_request=yes -dxdebug.client_port=9003 -dxdebug.client_host=$(APP_DEBUG_REMOTE_HOST) -dxdebug.discover_client_host=false -dxdebug.idekey=$(APP_DEBUG_IDE_KEY)"'
 
 test:
 	echo 'test'
@@ -20,14 +20,17 @@ deploy_server_start:
 	(cd server; php artisan down --retry=360)
 	make db_backup
 	git pull
-	(cd server; composer install)
+	make stop_supervisor_workers
+	(cd server; composer install --no-dev --optimize-autoloader --no-scripts)
 	(cd server; composer dump-autoload --optimize)
-	(cd server; php artisan migrate)
+	(cd server; php artisan migrate --force)
 	make cache_config
-	# manually run make restart_queue_worker
+	make restart_supervisor_workers
+	make cache_deploy # set in the local Makefile
 deploy_client_to_prod:
-	npm run prod
-	scp -r public $(PROD_USER)@$(PROD_HOST):$(PROD_FOLDER)
+	npm run vite:build
+	rsync -av --delete --exclude 'index.php' --exclude '.htaccess' \
+		public/ $(PROD_USER)@$(PROD_HOST):$(PROD_FOLDER)/public/
 deploy_server_finish:
 	(cd server; php artisan up)
 
@@ -42,7 +45,7 @@ dev_vm_halt:
 	(cd $(HOMESTEAD_BOX_FOLDER) && vagrant halt)
 
 dev_watch:
-	npm run watch
+	npm run vite:watch
 dev_artisan:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan $(CMD)'
 dev_artisan_debug:
@@ -52,9 +55,12 @@ dev_migrate:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan migrate'
 dev_rollback:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan migrate:rollback --step=1'
+dev_seed:
+	make dev_sc CMD='cd $(DEV_FOLDER)/server; php artisan db:seed --class=DatabaseSeeder'
 
-dev_ngrok:
-	make dev_sc CMD='ngrok authtoken $(NGROK_AUTH_TOKEN); ngrok http -host-header=rewrite $(APP_URL):80'
+ngrok:
+	ngrok config add-authtoken $(NGROK_AUTH_TOKEN)
+	ngrok http --host-header=rewrite $(APP_URL):80
 
 #
 # Database
@@ -64,10 +70,12 @@ dev_ngrok:
 # todo: transfer the backup to S3 https://laravel.com/docs/5.8/homestead#configuring-minio
 prod_list_backups:
 	# NOTE: delete files using a name mask "ls -1 | grep '{MASK}' | xargs rm -f"
-	make prod_ssh_cmd CMD='cd $(BACKUP_FOLDER); ls -1'
+	make prod_ssh_cmd CMD='cd $(BACKUP_FOLDER); ls -lh'
 prod_db_backup:
 	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER); make db_backup'
 
+dev_db_restore:
+	make dev_sc CMD='cd $(DEV_FOLDER); make db_restore BACKUP_NAME=$(BACKUP_NAME)'
 dev_db_restore_from_prod:
 	make dev_sc CMD='cd $(DEV_FOLDER); make db_restore_from_prod BACKUP_NAME=$(BACKUP_NAME)'
 
@@ -87,9 +95,8 @@ db_restore_from_prod:
 	# make db_restore_from_prod BACKUP_NAME=
 	make db_download_from_prod BACKUP_NAME=$(BACKUP_NAME)
 	make db_restore BACKUP_NAME=$(BACKUP_NAME)
-# todo: Switch to the current DB context
 db_connect:
-	mysql -u root -p
+	sudo mysql $(DB_DATABASE)
 
 
 #
@@ -119,9 +126,21 @@ dev_autoload:
 #
 # Logs
 #
-prod_logs:
+prod_list_logs:
+	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; ls -l'
+prod_tail_logs:
 	ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 200 -f `ls -t | head -1`'
-dev_logs:
+	#ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; tail -n 200 -f laravel-2025-01-15.log'
+prod_delete_logs:
+	make prod_ssh_cmd CMD='cd $(PROD_FOLDER)/server/storage/logs; ls -lh'
+	@printf 'Delete the production log files listed above? Type "delete logs" to confirm: '; \
+	read confirmation; \
+	if [ "$$confirmation" = "delete logs" ]; then \
+		ssh $(PROD_USER)@$(PROD_HOST) -t 'cd $(PROD_FOLDER)/server/storage/logs; find . -maxdepth 1 -type f -name "*.log" -print -delete'; \
+	else \
+		echo 'Aborted.'; \
+	fi
+dev_tail_logs:
 	make dev_sc CMD='cd $(DEV_FOLDER)/server/storage/logs; tail -n 100 -f laravel.log'
 
 
@@ -140,27 +159,71 @@ dev_sc: # todo: merge this command with dev_ssh once I figure out how to assign 
 
 
 #
-# Queue
+# Queue, Schedule, Horizon
 #
 create_queue_worker:
 	# make create_queue_worker APP_FOLDER="$(PROD_FOLDER)" APP_USER="$(PROD_USER)"
 	$(APP_FOLDER)/shell/create_queue_worker.sh "$(APP_FOLDER)" "$(APP_USER)"
+create_schedule_worker:
+	$(APP_FOLDER)/shell/create_schedule_worker.sh "$(APP_FOLDER)" "$(APP_USER)"
 create_horizon_worker:
 	$(APP_FOLDER)/shell/create_horizon_worker.sh "$(APP_FOLDER)" "$(APP_USER)"
 
-restart_queue_worker:
+# On the new prod box (Noble 26.04) the Laravel scheduler runs via cron, not
+# supervisor — so `laravel_schedule-worker:*` doesn't exist as a group there.
+# The leading `-` tells make to ignore the "No such group" error and continue,
+# so this target stays compatible with both the old supervisor-based layout
+# and the new cron-based one.
+restart_supervisor_workers:
 	sudo supervisorctl restart laravel_queue-worker:*
+	-sudo supervisorctl restart laravel_schedule-worker:*
+stop_supervisor_workers:
+	sudo supervisorctl stop laravel_queue-worker:*
+	-sudo supervisorctl stop laravel_schedule-worker:*
+
+dev_create_queue_worker:
+	make dev_sc CMD='cd $(DEV_FOLDER); make create_queue_worker APP_FOLDER="$(DEV_FOLDER)" APP_USER="vagrant"'
+dev_create_schedule_worker:
+	make dev_sc CMD='cd $(DEV_FOLDER); make create_schedule_worker APP_FOLDER="$(DEV_FOLDER)" APP_USER="vagrant"'
+dev_create_horizon_worker:
+	make dev_sc CMD='cd $(DEV_FOLDER); make create_horizon_worker APP_FOLDER="$(DEV_FOLDER)" APP_USER="vagrant"'
+
 retry_failed_jobs:
 	(cd server; php artisan queue:retry all)
 see_failed_jobs:
 	(cd server; php artisan queue:failed)
-
-dev_create_queue_worker:
-	make dev_sc CMD='cd $(DEV_FOLDER); make create_queue_worker APP_FOLDER="$(DEV_FOLDER)" APP_USER="vagrant"'
-dev_create_horizon_worker:
-	make dev_sc CMD='cd $(DEV_FOLDER); make create_horizon_worker APP_FOLDER="$(DEV_FOLDER)" APP_USER="vagrant"'
+process_all_jobs:
+	(cd server; php artisan queue:work --stop-when-empty)
 
 dev_run_queue:
 	make dev_artisan_debug CMD='queue:work database --queue=publish,default --sleep=3 --tries=3 --timeout=60'
+dev_run_schedule:
+	make dev_artisan_debug CMD='schedule:run'
 dev_run_horizon:
 	make dev_artisan CMD='horizon'
+
+#
+# Diagnostics
+#
+check_disk_space:
+	df -h
+check_folder_size:
+# 	old way: du -sh
+	sudo ncdu
+
+#
+# Certificates
+#
+renew_certificates_dry_run:
+	sudo certbot renew --dry-run
+renew_certificates:
+	sudo certbot renew
+
+#
+# Vagrant sync
+#
+dev_vagrant_rsync:
+	(cd $(HOMESTEAD_BOX_FOLDER) && make rsync-auto)
+
+dev_vagrant_provision:
+	(cd $(HOMESTEAD_BOX_FOLDER) && make provision)

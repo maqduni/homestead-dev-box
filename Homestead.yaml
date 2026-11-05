@@ -4,7 +4,7 @@ hostname: devbox
 memory: 2048
 cpus: 1
 provider: parallels
-box: laravel/homestead-arm
+box: laravel/homestead
 authorize: ~/.ssh/id_rsa.pub
 keys:
     - ~/.ssh/id_rsa
@@ -15,10 +15,30 @@ folders:
     #
     -   map: ~/Documents/Projects/homestead-dev-box
         to: /home/vagrant/Code/homestead-dev-box
+        type: "rsync"
     -   map: ~/Documents/Projects/vazhaju
         to: /home/vagrant/Code/vazhaju
+        type: "rsync"
+        # VM-authoritative paths. These exist / are generated inside the VM and
+        # rsync (Mac -> VM) must not clobber them, otherwise composer updates /
+        # DB migrations / log writes done in the VM get silently reverted.
+        #
+        # The colon-prefixed key `:rsync__exclude` is required so Ruby's YAML
+        # parser produces a symbol key — Vagrant's synced_folder options use
+        # symbol kwargs internally. Plain `rsync__exclude:` is a string key and
+        # gets silently discarded by the **options splat.
+        options:
+            :rsync__exclude:
+                - "server/vendor/"
+                - "server/composer.lock"
+                - "server/bootstrap/cache/"
+                - "server/storage/logs/"
+                - "server/storage/framework/cache/"
+                - "server/storage/framework/sessions/"
+                - "server/storage/framework/views/"
     -   map: ~/Documents/Projects/vazhaju-resources
         to: /home/vagrant/Code/vazhaju-resources
+        type: "rsync"
 #    -   map: ~/Documents/Projects/_Personal/vazhaju-auth
 #        to: /home/vagrant/Code/vazhaju-auth
 
@@ -26,16 +46,13 @@ folders:
     # Tooling
     #
     # https://virtualenvwrapper.readthedocs.io/en/latest/command_ref.html#managing-environments
-    -   map: ~/.virtualenvs # map local Python virtual environments
-        to: /home/vagrant/.virtualenvs
+#    -   map: ~/.virtualenvs # map local Python virtual environments
+#        to: /home/vagrant/.virtualenvs
 
 sites:
     -   map: vazhaju.test
         to: /home/vagrant/Code/vazhaju/public
-    -   map: django.test
-        to: 8000
-        type: proxy
-        php: "7.4"
+        php: "8.3"
 #    -   map: auth.vazhaju.test
 #        to: /home/vagrant/Code/vazhaju-auth/public
 
@@ -44,7 +61,9 @@ databases:
 #    - auth
 
 features:
-    - python: true
+    # NOTE: there's probably a bug in Homestead https://laracasts.com/discuss/channels/code-review/homestead-not-creating-databases
+    - mysql: true
+#    - python: true
 services:
     - enabled:
           - "mysql"

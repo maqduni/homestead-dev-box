@@ -1,5 +1,13 @@
 {
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/svpernova09/homestead"
+        }
+    ],
     "require-dev": {
-        "laravel/homestead": "13.2.1"
-    }
+        "laravel/homestead": "dev-main"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
