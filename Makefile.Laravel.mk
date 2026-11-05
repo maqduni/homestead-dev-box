@@ -20,15 +20,17 @@ deploy_server_start:
 	(cd server; php artisan down --retry=360)
 	make db_backup
 	git pull
-	(cd server; composer install)
+	make stop_supervisor_workers
+	(cd server; composer install --no-dev --optimize-autoloader --no-scripts)
 	(cd server; composer dump-autoload --optimize)
-	(cd server; php artisan migrate)
+	(cd server; php artisan migrate --force)
 	make cache_config
-	# ATTENTION: manually run "make restart_supervisor_workers"
+	make restart_supervisor_workers
 	make cache_deploy # set in the local Makefile
 deploy_client_to_prod:
 	npm run vite:build
-	scp -r public $(PROD_USER)@$(PROD_HOST):$(PROD_FOLDER)
+	rsync -av --delete --exclude 'index.php' --exclude '.htaccess' \
+		public/ $(PROD_USER)@$(PROD_HOST):$(PROD_FOLDER)/public/
 deploy_server_finish:
 	(cd server; php artisan up)
 
@@ -93,9 +95,8 @@ db_restore_from_prod:
 	# make db_restore_from_prod BACKUP_NAME=
 	make db_download_from_prod BACKUP_NAME=$(BACKUP_NAME)
 	make db_restore BACKUP_NAME=$(BACKUP_NAME)
-# todo: Switch to the current DB context
 db_connect:
-	mysql -u root -p
+	sudo mysql $(DB_DATABASE)
 
 
 #
@@ -168,12 +169,17 @@ create_schedule_worker:
 create_horizon_worker:
 	$(APP_FOLDER)/shell/create_horizon_worker.sh "$(APP_FOLDER)" "$(APP_USER)"
 
+# On the new prod box (Noble 26.04) the Laravel scheduler runs via cron, not
+# supervisor — so `laravel_schedule-worker:*` doesn't exist as a group there.
+# The leading `-` tells make to ignore the "No such group" error and continue,
+# so this target stays compatible with both the old supervisor-based layout
+# and the new cron-based one.
 restart_supervisor_workers:
 	sudo supervisorctl restart laravel_queue-worker:*
-	sudo supervisorctl restart laravel_schedule-worker:*
+	-sudo supervisorctl restart laravel_schedule-worker:*
 stop_supervisor_workers:
 	sudo supervisorctl stop laravel_queue-worker:*
-	sudo supervisorctl stop laravel_schedule-worker:*
+	-sudo supervisorctl stop laravel_schedule-worker:*
 
 dev_create_queue_worker:
 	make dev_sc CMD='cd $(DEV_FOLDER); make create_queue_worker APP_FOLDER="$(DEV_FOLDER)" APP_USER="vagrant"'
@@ -202,7 +208,8 @@ dev_run_horizon:
 check_disk_space:
 	df -h
 check_folder_size:
-	du -sh
+# 	old way: du -sh
+	sudo ncdu
 
 #
 # Certificates
@@ -216,4 +223,7 @@ renew_certificates:
 # Vagrant sync
 #
 dev_vagrant_rsync:
-	(cd $(HOMESTEAD_BOX_FOLDER) && vagrant rsync-auto)
+	(cd $(HOMESTEAD_BOX_FOLDER) && make rsync-auto)
+
+dev_vagrant_provision:
+	(cd $(HOMESTEAD_BOX_FOLDER) && make provision)

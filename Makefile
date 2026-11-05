@@ -14,3 +14,6 @@ ssh:
 
 provision:
 	vagrant reload --provision
+
+rsync-auto:
+	vagrant rsync-auto $(VM_ID)
